@@ -67,6 +67,10 @@ button:hover {
 canvas {
     border: 2px solid #333;
     display: block;
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    touch-action: none;
 }
 
 #game-over {
@@ -115,4 +119,39 @@ input[type="text"]:focus {
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
+}
+
+@media (max-height: 500px) {
+    canvas {
+        width: auto;
+        height: 70vh;
+    }
+
+    #info {
+        margin-bottom: 0.25rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 1rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+        letter-spacing: 0.3em;
+    }
+
+    .buttons {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
+
+    input[type="text"] {
+        width: 100%;
+    }
 }

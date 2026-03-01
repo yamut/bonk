@@ -106,8 +106,51 @@
         }
     }
 
+    // Touch input — follow finger
+    let touchY = null;
+
+    canvas.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        touchY = (e.touches[0].clientY - rect.top) / rect.height * H;
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        touchY = (e.touches[0].clientY - rect.top) / rect.height * H;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        touchY = null;
+        if (lastDir !== 0) {
+            lastDir = 0;
+            ws.send(JSON.stringify({
+                type: 'input',
+                data: { direction: 0 }
+            }));
+        }
+    }, { passive: false });
+
     // Rendering
     function draw() {
+        // Touch follow — send direction toward finger each frame
+        if (touchY !== null && state && ws && ws.readyState === WebSocket.OPEN) {
+            const paddleY = mySide === 'left' ? state.left_paddle.y : state.right_paddle.y;
+            const deadZone = 10;
+            let dir = 0;
+            if (touchY < paddleY - deadZone) dir = -1;
+            else if (touchY > paddleY + deadZone) dir = 1;
+            if (dir !== lastDir) {
+                lastDir = dir;
+                ws.send(JSON.stringify({
+                    type: 'input',
+                    data: { direction: dir }
+                }));
+            }
+        }
+
         ctx.fillStyle = '#111';
         ctx.fillRect(0, 0, W, H);
 
