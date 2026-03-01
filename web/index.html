@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BONK</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="lobby">
+        <h1>BONK</h1>
+        <input type="text" id="name" placeholder="Your name" maxlength="16" value="">
+        <p id="waiting"></p>
+        <div class="buttons">
+            <button onclick="join('ai')">Play vs AI</button>
+            <button onclick="join('pvp')">Play vs Human</button>
+        </div>
+    </div>
+    <div id="queue" style="display:none">
+        <h1>BONK</h1>
+        <p class="queue-status">Waiting for opponent...</p>
+        <p id="queue-waiting"></p>
+        <button onclick="cancelQueue()">Cancel</button>
+    </div>
+    <div id="game">
+        <p id="info"></p>
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+    <div id="game-over">
+        <h2 id="result"></h2>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

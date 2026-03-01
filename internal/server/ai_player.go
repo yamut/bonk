@@ -1,0 +1,71 @@
+package server
+
+import (
+	"bonk/internal/game"
+	"encoding/json"
+	"time"
+)
+
+// NewAIPlayer creates a Player backed by an AI that reads state from Send
+// and feeds input decisions into Recv.
+func NewAIPlayer(hub *Hub) *Player {
+	p := NewPlayer("AI")
+	ai := game.NewAI()
+
+	go func() {
+		// 10Hz decision rate — produces smooth movement instead of 60Hz jitter.
+		// The session reuses the last direction between decisions.
+		ticker := time.NewTicker(time.Second / 10)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-p.Done:
+				return
+			case <-ticker.C:
+			}
+
+			// Drain Send channel to get the latest state
+			var lastMsg []byte
+		drain:
+			for {
+				select {
+				case msg := <-p.Send:
+					lastMsg = msg
+				default:
+					break drain
+				}
+			}
+
+			if lastMsg == nil {
+				continue
+			}
+
+			var env Envelope
+			if err := json.Unmarshal(lastMsg, &env); err != nil {
+				continue
+			}
+			if env.Type != MsgState {
+				continue
+			}
+
+			var state game.GameState
+			if err := json.Unmarshal(env.Data, &state); err != nil {
+				continue
+			}
+
+			ai.Adapt(state.LeftScore, state.RightScore)
+			dir := ai.Decide(&state)
+
+			inputEnv := Envelope{Type: MsgInput}
+			inputEnv.Data, _ = json.Marshal(InputData{Direction: dir})
+
+			select {
+			case p.Recv <- inputEnv:
+			default:
+			}
+		}
+	}()
+
+	return p
+}

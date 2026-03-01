@@ -1,0 +1,118 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #111;
+    color: #eee;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+h1 {
+    font-size: 3rem;
+    letter-spacing: 0.5em;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+#lobby {
+    text-align: center;
+}
+
+#lobby p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+    color: #999;
+}
+
+.buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+button {
+    background: #222;
+    color: #eee;
+    border: 2px solid #555;
+    padding: 0.8rem 2rem;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+button:hover {
+    border-color: #fff;
+}
+
+#game {
+    display: none;
+    text-align: center;
+}
+
+#info {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: #999;
+}
+
+canvas {
+    border: 2px solid #333;
+    display: block;
+}
+
+#game-over {
+    display: none;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+#game-over h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+input[type="text"] {
+    background: #222;
+    color: #eee;
+    border: 2px solid #555;
+    padding: 0.5rem 1rem;
+    font-family: inherit;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #fff;
+}
+
+#queue {
+    text-align: center;
+}
+
+.queue-status {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+#queue-waiting {
+    font-size: 1rem;
+    color: #999;
+    margin-bottom: 1.5rem;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
