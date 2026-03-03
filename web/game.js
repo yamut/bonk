@@ -75,19 +75,25 @@
         };
     }
 
+    function snapshotState(s) {
+        return {
+            ball: { x: s.ball.x, y: s.ball.y, vx: s.ball.vx, vy: s.ball.vy },
+            left_paddle: { y: s.left_paddle.y },
+            right_paddle: { y: s.right_paddle.y }
+        };
+    }
+
     function handlePositionUpdate(data, isFull) {
         const now = performance.now();
-        prevState = state ? Object.assign({}, state) : null;
+        if (state) prevState = snapshotState(state);
         prevStateTime = lastStateTime;
         lastStateTime = now;
 
         if (isFull) {
-            // Full state message — update everything including scores
             state = data;
             scores.left = data.left_score;
             scores.right = data.right_score;
         } else {
-            // Frame message — update positions only, keep scores
             if (!state) {
                 state = {
                     ball: { x: data.bx, y: data.by, vx: data.bvx, vy: data.bvy },
@@ -108,7 +114,6 @@
             }
         }
 
-        // Snap local paddle to server position on update
         if (mySide === 'left') {
             localPaddleY = state.left_paddle.y;
         } else {
@@ -116,30 +121,14 @@
         }
     }
 
-    // Ball prediction — dead-reckon with wall bounces
+    // Ball prediction — single extrapolation step, clamped to field
     function predictBall(ball, dt) {
-        let x = ball.x, y = ball.y;
-        let vx = ball.vx, vy = ball.vy;
         const halfBall = BALL_SIZE / 2;
-        let remaining = dt;
-        const step = 1 / 600; // sub-step to handle bounces
-
-        while (remaining > 0) {
-            const t = Math.min(remaining, step);
-            x += vx * t;
-            y += vy * t;
-
-            if (y - halfBall <= 0) {
-                y = halfBall;
-                vy = Math.abs(vy);
-            } else if (y + halfBall >= H) {
-                y = H - halfBall;
-                vy = -Math.abs(vy);
-            }
-
-            remaining -= t;
-        }
-
+        let x = ball.x + ball.vx * dt;
+        let y = ball.y + ball.vy * dt;
+        // Clamp Y inside walls (mirrors one bounce)
+        if (y < halfBall) y = halfBall;
+        else if (y > H - halfBall) y = H - halfBall;
         return { x: x, y: y };
     }
 
@@ -256,20 +245,19 @@
             return;
         }
 
-        // Predict ball position
-        const sinceLast = lastStateTime > 0 ? (now - lastStateTime) / 1000 : 0;
+        // Predict ball position (cap dt to avoid runaway extrapolation)
+        const sinceLast = lastStateTime > 0 ? Math.min((now - lastStateTime) / 1000, 0.1) : 0;
         const predicted = predictBall(state.ball, sinceLast);
 
-        // Interpolate opponent paddle
+        // Extrapolate opponent paddle
         let opponentY;
         const opponentServer = mySide === 'left' ? state.right_paddle.y : state.left_paddle.y;
         if (prevState && prevStateTime > 0 && lastStateTime > prevStateTime) {
             const prevOpponent = mySide === 'left' ? prevState.right_paddle.y : prevState.left_paddle.y;
             const interval = lastStateTime - prevStateTime;
             const elapsed = now - lastStateTime;
-            const t = Math.min(elapsed / interval, 1);
+            const t = Math.min(elapsed / interval, 2);
             opponentY = opponentServer + (opponentServer - prevOpponent) * t;
-            // Clamp
             const halfPaddle = PADDLE_H / 2;
             if (opponentY < halfPaddle) opponentY = halfPaddle;
             if (opponentY > H - halfPaddle) opponentY = H - halfPaddle;
