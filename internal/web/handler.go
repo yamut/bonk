@@ -2,7 +2,9 @@ package web
 
 import (
 	"bonk/internal/server"
+	rootweb "bonk/web"
 	"encoding/json"
+	"io/fs"
 	"log"
 	"net/http"
 
@@ -15,7 +17,8 @@ var upgrader = websocket.Upgrader{
 
 func Handler(hub *server.Hub) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir("web")))
+	static, _ := fs.Sub(rootweb.Assets, ".")
+	mux.Handle("/", http.FileServer(http.FS(static)))
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		handleWS(w, r, hub)
 	})
