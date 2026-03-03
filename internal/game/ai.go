@@ -16,16 +16,19 @@ type AI struct {
 }
 
 func NewAI() *AI {
-	return &AI{Difficulty: 0.15}
+	return &AI{Difficulty: 0.5}
 }
 
 // Adapt adjusts difficulty based on score changes.
 func (ai *AI) Adapt(humanScore, aiScore int) {
+	changed := false
 	if humanScore > ai.lastHumanScore {
 		ai.Difficulty += 0.02
+		changed = true
 	}
 	if aiScore > ai.lastAIScore {
 		ai.Difficulty -= 0.04
+		changed = true
 	}
 	ai.lastHumanScore = humanScore
 	ai.lastAIScore = aiScore
@@ -37,8 +40,9 @@ func (ai *AI) Adapt(humanScore, aiScore int) {
 		ai.Difficulty = 0.95
 	}
 
-	// Reset target on score change so AI re-evaluates
-	ai.hasTarget = false
+	if changed {
+		ai.hasTarget = false
+	}
 }
 
 // Decide returns the paddle direction for the AI (-1, 0, or 1).
@@ -76,9 +80,9 @@ func (ai *AI) Decide(state *GameState) int {
 func (ai *AI) recalcTarget(state *GameState) {
 	predicted := ai.predictBallY(state)
 
-	// Error: at low difficulty, the AI's target can be way off
-	// Error range scales from ±200px at difficulty 0.1 to ±20px at difficulty 0.95
-	maxError := (1 - ai.Difficulty) * 250
+	// Error: at low difficulty, the AI's target can be off
+	// Error range scales from ±135px at difficulty 0.1 to ±7px at difficulty 0.95
+	maxError := (1 - ai.Difficulty) * 150
 	offset := (rand.Float64()*2 - 1) * maxError
 
 	ai.targetY = clamp(predicted+offset, float64(PaddleHeight)/2, FieldHeight-float64(PaddleHeight)/2)
