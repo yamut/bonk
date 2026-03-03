@@ -52,9 +52,16 @@ func (ai *AI) Decide(state *GameState) int {
 
 	ballMovingToward := ball.VX > 0
 
-	// When ball is moving away, just stay put — looks natural
+	// When ball is moving away, drift back toward center
 	if !ballMovingToward {
 		ai.hasTarget = false
+		center := float64(FieldHeight) / 2
+		if paddleY < center-30 {
+			return 1
+		}
+		if paddleY > center+30 {
+			return -1
+		}
 		return 0
 	}
 

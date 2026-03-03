@@ -27,12 +27,22 @@ func NewAIPlayer(hub *Hub) *Player {
 			case <-ticker.C:
 			}
 
-			// Drain Send channel to get the latest state
+			// Drain Send channel. Process all "state" messages for score
+			// updates, but use the latest message for the AI decision.
 			var lastMsg []byte
 		drain:
 			for {
 				select {
 				case msg := <-p.Send:
+					// Peek at state messages to capture score updates
+					var env Envelope
+					if json.Unmarshal(msg, &env) == nil && env.Type == MsgState {
+						var s game.GameState
+						if json.Unmarshal(env.Data, &s) == nil {
+							lastLeftScore = s.LeftScore
+							lastRightScore = s.RightScore
+						}
+					}
 					lastMsg = msg
 				default:
 					break drain
