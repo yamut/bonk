@@ -18,7 +18,11 @@ var upgrader = websocket.Upgrader{
 func Handler(hub *server.Hub) http.Handler {
 	mux := http.NewServeMux()
 	static, _ := fs.Sub(rootweb.Assets, ".")
-	mux.Handle("/", http.FileServer(http.FS(static)))
+	fileServer := http.FileServer(http.FS(static))
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
+		fileServer.ServeHTTP(w, r)
+	}))
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		handleWS(w, r, hub)
 	})
