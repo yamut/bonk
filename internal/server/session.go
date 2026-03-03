@@ -12,7 +12,6 @@ type GameSession struct {
 	Left           *Player
 	Right          *Player
 	hub            *Hub
-	tickCount      uint64
 	lastLeftScore  int
 	lastRightScore int
 }
@@ -66,11 +65,7 @@ func (gs *GameSession) Run() {
 		}
 
 		gs.Engine.Tick(leftDir, rightDir)
-		gs.tickCount++
-
-		if gs.Engine.State.Over || gs.tickCount%3 == 0 {
-			gs.broadcastUpdate()
-		}
+		gs.broadcastUpdate()
 
 		if gs.Engine.State.Over {
 			gs.broadcastOver()
