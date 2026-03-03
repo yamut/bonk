@@ -18,6 +18,8 @@ func NewAIPlayer(hub *Hub) *Player {
 		ticker := time.NewTicker(time.Second / 10)
 		defer ticker.Stop()
 
+		var lastLeftScore, lastRightScore int
+
 		for {
 			select {
 			case <-p.Done:
@@ -45,12 +47,28 @@ func NewAIPlayer(hub *Hub) *Player {
 			if err := json.Unmarshal(lastMsg, &env); err != nil {
 				continue
 			}
-			if env.Type != MsgState {
-				continue
-			}
 
 			var state game.GameState
-			if err := json.Unmarshal(env.Data, &state); err != nil {
+			switch env.Type {
+			case MsgState:
+				if err := json.Unmarshal(env.Data, &state); err != nil {
+					continue
+				}
+				lastLeftScore = state.LeftScore
+				lastRightScore = state.RightScore
+			case MsgFrame:
+				var f FrameData
+				if err := json.Unmarshal(env.Data, &f); err != nil {
+					continue
+				}
+				state = game.GameState{
+					Ball:        game.Ball{X: f.BX, Y: f.BY, VX: f.BVX, VY: f.BVY},
+					LeftPaddle:  game.Paddle{Y: f.LP},
+					RightPaddle: game.Paddle{Y: f.RP},
+					LeftScore:   lastLeftScore,
+					RightScore:  lastRightScore,
+				}
+			default:
 				continue
 			}
 

@@ -10,6 +10,7 @@ const (
 	MsgLobby = "lobby" // server -> client
 	MsgStart = "start" // server -> client
 	MsgState = "state" // server -> client
+	MsgFrame = "frame" // server -> client (lightweight position update)
 	MsgOver  = "over"  // server -> client
 )
 
@@ -40,10 +41,22 @@ type OverData struct {
 	Winner string `json:"winner"` // "left" or "right"
 }
 
+// FrameData is a lightweight position-only update sent between full state messages.
+type FrameData struct {
+	BX  float64 `json:"bx"`
+	BY  float64 `json:"by"`
+	BVX float64 `json:"bvx"`
+	BVY float64 `json:"bvy"`
+	LP  float64 `json:"lp"`
+	RP  float64 `json:"rp"`
+}
+
+// typedEnvelope is used only for serialization — one json.Marshal call instead of two.
+type typedEnvelope struct {
+	Type string `json:"type"`
+	Data any    `json:"data"`
+}
+
 func MakeEnvelope(typ string, data any) ([]byte, error) {
-	d, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(Envelope{Type: typ, Data: d})
+	return json.Marshal(typedEnvelope{Type: typ, Data: data})
 }

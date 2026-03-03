@@ -7,11 +7,14 @@ import (
 )
 
 type GameSession struct {
-	ID     string
-	Engine *game.Engine
-	Left   *Player
-	Right  *Player
-	hub    *Hub
+	ID             string
+	Engine         *game.Engine
+	Left           *Player
+	Right          *Player
+	hub            *Hub
+	tickCount      uint64
+	lastLeftScore  int
+	lastRightScore int
 }
 
 func NewGameSession(id string, left, right *Player, hub *Hub) *GameSession {
@@ -63,7 +66,11 @@ func (gs *GameSession) Run() {
 		}
 
 		gs.Engine.Tick(leftDir, rightDir)
-		gs.broadcastState()
+		gs.tickCount++
+
+		if gs.Engine.State.Over || gs.tickCount%3 == 0 {
+			gs.broadcastUpdate()
+		}
 
 		if gs.Engine.State.Over {
 			gs.broadcastOver()
@@ -89,10 +96,39 @@ func (gs *GameSession) drainInput(p *Player, current int) int {
 	}
 }
 
+func (gs *GameSession) broadcastUpdate() {
+	s := &gs.Engine.State
+	if s.LeftScore != gs.lastLeftScore || s.RightScore != gs.lastRightScore || s.Over {
+		gs.lastLeftScore = s.LeftScore
+		gs.lastRightScore = s.RightScore
+		gs.broadcastState()
+	} else {
+		gs.broadcastFrame()
+	}
+}
+
 func (gs *GameSession) broadcastState() {
 	msg, err := MakeEnvelope(MsgState, gs.Engine.State)
 	if err != nil {
 		log.Printf("session %s: marshal state: %v", gs.ID, err)
+		return
+	}
+	gs.safeSend(gs.Left, msg)
+	gs.safeSend(gs.Right, msg)
+}
+
+func (gs *GameSession) broadcastFrame() {
+	s := &gs.Engine.State
+	msg, err := MakeEnvelope(MsgFrame, FrameData{
+		BX:  s.Ball.X,
+		BY:  s.Ball.Y,
+		BVX: s.Ball.VX,
+		BVY: s.Ball.VY,
+		LP:  s.LeftPaddle.Y,
+		RP:  s.RightPaddle.Y,
+	})
+	if err != nil {
+		log.Printf("session %s: marshal frame: %v", gs.ID, err)
 		return
 	}
 	gs.safeSend(gs.Left, msg)

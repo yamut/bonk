@@ -86,6 +86,13 @@ func (m *Model) handleServerMsg(env server.Envelope) (tea.Model, tea.Cmd) {
 		if err := json.Unmarshal(env.Data, &state); err == nil {
 			m.state = &state
 		}
+	case server.MsgFrame:
+		var f server.FrameData
+		if err := json.Unmarshal(env.Data, &f); err == nil && m.state != nil {
+			m.state.Ball = game.Ball{X: f.BX, Y: f.BY, VX: f.BVX, VY: f.BVY}
+			m.state.LeftPaddle.Y = f.LP
+			m.state.RightPaddle.Y = f.RP
+		}
 	case server.MsgStart:
 		var data server.StartData
 		if err := json.Unmarshal(env.Data, &data); err == nil {
